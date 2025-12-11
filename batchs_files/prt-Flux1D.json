@@ -1,0 +1,30 @@
+{
+    "parameters": {
+        "workflow_file": "./workflows-files/wkf-Flux1D-API.json",
+        "workflow_items": {
+            "positive_prompt": "6,inputs,text",
+            "noise_seed": "25,inputs,noise_seed",
+            "batch_size": "27,inputs,batch_size"
+        },
+        "save_images": {
+            "enabled": false,
+            "output_directory": "./images/",
+            "filename_prefix": "Flux1D"
+        }
+    },
+    "prompts": [
+        {
+            "positive_prompt": "FS, style of Rembrandt, vantablack, novuschroma, dry brush painting, del1cate_balance style, whimsical, Soft, Pastel, Dreamy, Delicate Masterpiece, high quality, Oil Painting, A stunningly beautiful/cute 20 years old Japanese girl without a single flaw,Accentuated large droopy eyes,Emphasized oblong face,Emphasized narrow, sharp-angled jaw,skin as white as highlighted snow,Emphasized thin, sharp eyebrows, slender, pointed eyelashes,a small, prominent, high-bridged nose),(Height 173cm, Body accentuated by beautiful curve,emphasized medium-sized breasts and emphasized slim waist, large hips, long slender arms and legs),, (wearing light makeup,pink eyeshadows),(Japanese traditional hair cut,red and gold and white crane embroidery kimono,japanese traditional sandals,ornate hairpin:1.2)",
+            "noise_seed": "random"
+        },
+        {
+            "positive_prompt": "A close-up portrait of a woman's face submerged in water, her eyes closed in serene bliss as vibrant neon light patterns—fiery oranges, electric blues, pulsing purples—dance across her skin like living currents. Bubbles rise gently around her, catching and refracting these luminous colors into shimmering fractals that seem to pulse with inner energy. The lighting is ethereal, almost spiritual, casting an otherworldly glow from beneath the surface where deep shadows blend seamlessly with radiant hues. Her lips are parted softly, inviting stillness and tranquility. This image evokes a dreamlike state: timeless beauty suspended between reality and imagination, captured in vivid, immersive color gradients and dynamic interplay of light and shadow.",
+            "noise_seed": "random"
+        },
+        {
+            "positive_prompt": "ultra-detailed photo of a stunning woman, breathtaking face symmetry, luminous skin with natural texture, expressive almond-shaped eyes, long defined lashes, perfect brows, soft glossy lips, elegant confident expression, ideal balanced silhouette, graceful posture, cinematic soft rim light, warm light diffusion on skin, hyperrealistic hair strands with depth and micro-details, natural color transitions, high-end fashion aesthetic, premium editorial photography look, impeccable clarity, 8k ultra sharp, depth-rich bokeh, volumetric light, photorealistic color grading, score_up9, ffl-late80s-mk.1, woman, 1980s, short red polka dot dress, red headband, makeup, highlighted eyes, leans forward, gently lifts her dress, winks, deep neckline",
+            "noise_seed": "random",
+            "batch_size": 2
+        }
+    ]      
+}

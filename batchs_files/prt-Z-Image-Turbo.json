@@ -1,0 +1,55 @@
+{
+    "parameters": {
+        "workflow_file": "./workflows-files/wkf-Z-Image-Turbo-API.json",
+        "workflow_items": {
+            "positive_prompt": "6,inputs,text",
+            "negative_prompt": "7,inputs,text",
+            "seed": "3,inputs,seed",
+            "width": "13,inputs,width",
+            "height": "13,inputs,height",
+            "batch_size": "13,inputs,batch_size"
+        },
+        "save_images": {
+            "enabled": false,
+            "output_directory": "./images/",
+            "filename_prefix": "CFYUI-BP"
+        },
+        "generic_prompts": {
+            "negative_prompt": "blurry ugly bad",
+            "width": 1024,
+            "height": 1024
+        }
+    },
+    "prompts": [
+        {
+            "positive_prompt": "masterpiece, best quality, 1girl, solo, looking at viewer, smile, short hair, blue eyes, city background",
+            "seed": "random"
+        },
+        {
+            "positive_prompt": "epic fantasy landscape, towering mountains, vibrant colors, dramatic lighting, detailed scenery",
+            "negative_prompt": "low quality, blurry, dull colors",
+            "seed": "random",
+            "batch_size": 3
+        },
+        {
+            "positive_prompt": "futuristic cityscape at night, neon lights, flying cars, cyberpunk aesthetic, high detail",
+            "negative_prompt": "dark, low detail, empty",
+            "seed": "random",
+            "width": 1280,
+            "height": 720
+        },
+        {
+            "positive_prompt": "serene beach at sunset, palm trees, gentle waves, warm colors, peaceful atmosphere",
+            "negative_prompt": "stormy, dark, crowded",
+            "seed": 146,
+            "width": 1920,
+            "height": 1024
+        },
+        {
+            "positive_prompt": "majestic dragon flying over a medieval castle, detailed scales, fiery breath, dramatic sky",
+            "negative_prompt": "cartoonish, low detail, dull colors",
+            "seed": "random",
+            "batch_size": 5
+        }
+    ]
+}
