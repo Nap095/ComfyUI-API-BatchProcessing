@@ -27,7 +27,7 @@ This program enables batch image generation using the ComfyUI API. It reads JSON
 
 1. **Clone or download this repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Nap095/ComfyUI-API-BatchProcessing.git
    cd ComfyUI-API-BatchProcessing
 
 2. **Install dependencies:**
@@ -42,9 +42,12 @@ This program enables batch image generation using the ComfyUI API. It reads JSON
 
 2. **Execution:**
     ```batch
-    python [ComfyUI-API-BatchProcessing.py] [prompt_file.json]
+    python ComfyUI-API-BatchProcessing.py ./path/prompt_file.json
 
-If no argument is provided, the script looks for ./batchs/prompt-1.json:
+If no argument is provided, the script looks for ./batchs-files/prt-v15-pruned.json:
+
+By convention, workflow files are stored in the "workflows" directory and batch prompts are stored in the "batches" directory.
+
 
 Configuration File Format
 JSON configuration files must follow this structure:

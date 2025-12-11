@@ -96,7 +96,7 @@ def read_prompt_file(prompt_file):
     return pjson
 
 def main():
-    prompt_file = sys.argv[1] if len(sys.argv) > 1 else "./batchs/prompt-1.json"
+    prompt_file = sys.argv[1] if len(sys.argv) > 1 else "./batchs-files/prt-v15-pruned.json"
     if not os.path.exists(prompt_file):
         print(f"Prompt file '{prompt_file}' not found.")
         return
