@@ -30,9 +30,14 @@ This program enables batch image generation using the ComfyUI API. It reads JSON
    git clone https://github.com/Nap095/ComfyUI-API-BatchProcessing.git
    cd ComfyUI-API-BatchProcessing
 
-2. **Install dependencies:**
+2. **Create and activate a virtual environment**
    ```bash
-    pip install -r requirements.txt
+   python -m venv .ven
+   .venv/Script/activate
+
+4. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
 
 ## Usage
 
@@ -129,7 +134,7 @@ Example
 Generate images using the provided configuration:
 
 ```batch
-    python ComfyUI-API-BatchProcessing.py ./batchs_files/prt-Z-Image-Turbo.json
+    python ComfyUI-API-BatchProcessing.py ./batchs-files/prt-Z-Image-Turbo.json
 ```
 
 The script will:
