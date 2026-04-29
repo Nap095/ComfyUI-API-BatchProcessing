@@ -7,6 +7,8 @@
 #This is an example that uses the websockets api to know when a prompt execution is done
 #Once the prompt execution is done it downloads the images using the /history endpoint
 
+import itertools
+import re
 import websocket #NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
 import uuid
 import json
@@ -16,6 +18,79 @@ import random
 import os
 import sys
 from datetime import datetime
+from functions_json import get_node_block, set_node_block
+
+def expand_prompt_with_variables(prompt, variables_lists):
+    positive_prompt = prompt.get("positive_prompt", "")
+    if not positive_prompt or "$" not in positive_prompt:
+        return [prompt]
+
+    placeholder_names = re.findall(r"\$([A-Za-z_]\w*)", positive_prompt)
+    unique_names = []
+    for name in placeholder_names:
+        if name in variables_lists and name not in unique_names:
+            unique_names.append(name)
+
+    if not unique_names:
+        return [prompt]
+
+    lists = [variables_lists[name] for name in unique_names]
+    if any(len(values) == 0 for values in lists):
+        return [prompt]
+
+    expanded_prompts = []
+    for combo in itertools.product(*lists):
+        new_prompt = prompt.copy()
+        new_positive = positive_prompt
+        for name, value in zip(unique_names, combo):
+            new_positive = new_positive.replace(f"${name}", value)
+        new_prompt["positive_prompt"] = new_positive
+        expanded_prompts.append(new_prompt)
+
+    return expanded_prompts
+
+def set_node_block_fallback(workflow, block_name, node_id, attr_name, new_value, index_or_key=None):
+    """Modifie un attribut d'un nœud dans un bloc et retourne workflow mis à jour."""
+    if not isinstance(workflow, dict):
+        raise ValueError("workflow doit être un dict")
+
+    block = workflow.get(block_name)
+    if not isinstance(block, list):
+        raise ValueError(f"{block_name} doit être une liste")
+
+    node = next((n for n in block if str(n.get("id")) == str(node_id)), None)
+    if node is None:
+        raise ValueError(f"Noeud id={node_id} non trouvé dans {block_name}")
+
+    if attr_name not in node:
+        raise ValueError(f"Attribut '{attr_name}' absent du nœud id={node_id}")
+
+    if index_or_key is not None:
+        if isinstance(index_or_key, int):
+            attr_value = node[attr_name]
+            if not isinstance(attr_value, list):
+                raise ValueError(f"Attribut '{attr_name}' n'est pas une liste")
+            if not (0 <= index_or_key < len(attr_value)):
+                raise IndexError(f"index {index_or_key} hors plage")
+            attr_value[index_or_key] = new_value
+            node[attr_name] = attr_value
+        else:
+            # Assume dict
+            if not isinstance(node[attr_name], dict):
+                raise ValueError(f"Attribut '{attr_name}' n'est pas un dict")
+            node[attr_name][index_or_key] = new_value
+    else:
+        node[attr_name] = new_value
+
+    # Mise à jour du bloc dans workflow
+    workflow[block_name] = block
+    return workflow
+
+# Use fallback if import fails
+try:
+    set_node_block
+except NameError:
+    set_node_block = set_node_block_fallback
 
 server_address = "127.0.0.1:8188"
 client_id = str(uuid.uuid4())
@@ -108,6 +183,21 @@ def main():
     prompts = jsonwf['prompts']
     save_images_params = jsonwf['parameters']['save_images']
     
+    # Read variables section if present and store each file as a list of lines
+    variables_lists = {}
+    lists = []
+    if 'variables' in jsonwf:
+        for var_name, path in jsonwf['variables'].items():
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    content = [line.strip() for line in f if line.strip()]
+                variables_lists[var_name] = content
+                lists.append(content)
+            except FileNotFoundError:
+                print(f"File {path} not found for variable {var_name}")
+                variables_lists[var_name] = []
+                lists.append([])
+    
     try:
         generic_prompts = jsonwf['parameters']['generic_prompts']
     except KeyError:
@@ -115,52 +205,96 @@ def main():
 
     # Iterate over each prompt and generate images
     for prompt in prompts:
-        print("="*50)
-        # Load the original workflow JSON data
-        with open(workflow_file, "r", encoding="utf-8") as f:
-            workflow_jsondata = f.read()
+        prompt_variants = expand_prompt_with_variables(prompt, variables_lists)
+        for variant in prompt_variants:
+            print("="*50)
+            # Load the original workflow JSON data
+            with open(workflow_file, "r", encoding="utf-8") as f:
+                workflow_jsondata = f.read()
 
-        jsonwf = json.loads(workflow_jsondata)
+            jsonwf = json.loads(workflow_jsondata)
 
-        # If generic prompt exists apply it
-        if generic_prompts:
-            for generic_key, generic_value in generic_prompts.items():
+            # If generic prompt exists apply it
+            if generic_prompts:
+                for generic_key, generic_value in generic_prompts.items():
+                    # Get the node ID and input details from workflow_items
+                    z = workflow_items[generic_key].replace(" ", "").split(",")
+                    if len(z) == 4:
+                        if z[0] == "nodes":
+                            block_name = z[0]
+                            node_id = z[1]
+                            attr_name = z[2]
+                            list_index = z[3]
+                        else:
+                            block_name = z[1]
+                            node_id = z[0]
+                            attr_name = z[2]
+                            list_index = z[3]
+                    elif len(z) == 3:
+                        block_name = "nodes"
+                        node_id = z[0]
+                        attr_name = z[1]
+                        list_index = z[2]
+                    else:
+                        raise ValueError(f"Invalid workflow_items format for {generic_key}: {workflow_items[generic_key]}")
+
+                    index_or_key = int(list_index) if list_index.isdigit() else list_index
+
+                    # Set the value in the workflow JSON
+                    if index_or_key is None:
+                        jsonwf[node_id][attr_name] = generic_value
+                    elif isinstance(index_or_key, int):
+                        jsonwf[node_id][attr_name][index_or_key] = generic_value
+                    else:
+                        jsonwf[node_id][attr_name][index_or_key] = generic_value
+
+
+            print ("===>", variant)
+
+            # Apply each prompt parameter to the workflow
+            for prompt_key, prompt_value in variant.items():
+                print("   --->", prompt_key, " = ", prompt_value)
+
+                # Determine the specific value to set from seed
+                if (prompt_key == "seed" or prompt_key == "noise_seed" ) and prompt_value == "random":
+                    value = random.randint(1, 999999999999)
+                else:
+                    value = prompt_value
+
                 # Get the node ID and input details from workflow_items
-                z = workflow_items[generic_key].split(",")
-                node_id = z[0]
-                input_type = z[1]
-                input_name = z[2]
-                print(f"        Setting generic node {node_id} {input_type} {input_name} to {generic_value}")
+                z = workflow_items[prompt_key].replace(" ", "").split(",")
+                if len(z) == 4:
+                    if z[0] == "nodes":
+                        block_name = z[0]
+                        node_id = z[1]
+                        attr_name = z[2]
+                        list_index = z[3]
+                    else:
+                        block_name = z[1]
+                        node_id = z[0]
+                        attr_name = z[2]
+                        list_index = z[3]
+                elif len(z) == 3:
+                    block_name = "nodes"
+                    node_id = z[0]
+                    attr_name = z[1]
+                    list_index = z[2]
+                else:
+                    raise ValueError(f"Invalid workflow_items format for {prompt_key}: {workflow_items[prompt_key]}")
+
+                index_or_key = int(list_index) if list_index.isdigit() else list_index
 
                 # Set the value in the workflow JSON
-                jsonwf[node_id][input_type][input_name] = generic_value
+                if index_or_key is None:
+                    jsonwf[node_id][attr_name] = value
+                elif isinstance(index_or_key, int):
+                    jsonwf[node_id][attr_name][index_or_key] = value
+                else:
+                    jsonwf[node_id][attr_name][index_or_key] = value
 
-
-        print ("===>", prompt)
-
-        # Apply each prompt parameter to the workflow
-        for prompt_key, prompt_value in prompt.items():
-            print("   --->", prompt_key, " = ", prompt_value)
-
-            # Determine the specific value to set from seed
-            if (prompt_key == "seed" or prompt_key == "noise_seed" ) and prompt_value == "random":
-                value = random.randint(1, 999999999999)
-            else:
-                value = prompt_value
-
-            # Get the node ID and input details from workflow_items
-            z = workflow_items[prompt_key].split(",")
-            node_id = z[0]
-            input_type = z[1]
-            input_name = z[2]
-            print(f"        Setting node {node_id} {input_type} {input_name} to {value}")
-
-            # Set the value in the workflow JSON
-            jsonwf[node_id][input_type][input_name] = value
-
-        # Generate images with the updated workflow
-        print("Generating images...")
-        gen_images(jsonwf, save_images_params)
+            # Generate images with the updated workflow
+            print("Generating images...")
+            gen_images(jsonwf, save_images_params)
 
 if __name__ == "__main__":
     main()

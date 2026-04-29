@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "workflow_file": "./workflows-files/wkf-illustrjv21.json",
+        "workflow_items": {
+            "positive_prompt": "21:20, inputs, text"
+        },
+        "save_images": {
+            "enabled": false,
+            "output_directory": "./images/",
+            "filename_prefix": "Illv21"
+        }
+    },
+    "variables": {
+        "poses": "./files/poses.txt"
+    },
+    "prompts": [
+        {
+            "positive_prompt": "masterpiece, best quality, 1girl, solo, $poses, looking at viewer, smile, short hair, blond hair, strapless_dress , blue eyes, uncensored"
+        }]
+}

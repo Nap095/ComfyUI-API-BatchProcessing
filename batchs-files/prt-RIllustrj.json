@@ -1,0 +1,20 @@
+{
+    "parameters": {
+        "workflow_file": "./workflows-files/wkf-RIllustrj.json",
+        "workflow_items": {
+            "positive_prompt": "21:20, inputs, text"
+        },
+        "save_images": {
+            "enabled": false,
+            "output_directory": "./images/",
+            "filename_prefix": "RIllustrj"
+        }
+    },
+    "variables": {
+        "poses": "./files/poses.txt"
+    },
+    "prompts": [
+        {
+            "positive_prompt": "masterpiece, best quality, 1girl, 30 years old, $poses, looking at viewer, smile, short hair, blond hair, dress_shirt , blue eyes, uncensored"
+        }]
+}

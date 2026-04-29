@@ -16,6 +16,7 @@ This program enables batch image generation using the ComfyUI API. It reads JSON
 - Image output saving with timestamped filenames
 - WebSocket-based communication with ComfyUI server
 - Per-prompt parameter overrides
+- **Variable expansion** — inject values from text files into prompts using `$variable_name` placeholders, automatically generating one image per combination
 
 ## Requirements
 
@@ -101,6 +102,7 @@ JSON configuration files must follow this structure:
 
 Configuration Explanation
 
+- variables *(optional)*: Maps variable names to text files. Each file contains one value per line. Every `$variable_name` placeholder found in a `positive_prompt` is replaced with each value in the corresponding file, generating all possible combinations (cartesian product). See [Variables](#variables) section below.
 - workflow_file: Path to the ComfyUI workflow JSON file
 - workflow_items: Maps prompt parameters to workflow node locations (format: node_id,inputs,field_name)
 - save_images: Configure output image saving
@@ -111,6 +113,52 @@ Configuration Explanation
 - prompts: Array of individual prompt configurations
 - Use "random" for seed to generate random values
 - Any parameter can override generic prompts
+- Use `$variable_name` in `positive_prompt` to reference a variable defined in the `variables` section
+
+## Variables
+
+The `variables` section lets you define named lists of values stored in plain text files (one value per line). Any `$variable_name` placeholder in a `positive_prompt` is replaced by each value in turn, and multiple variables produce the full cartesian product — so one prompt entry can automatically expand into many generation jobs.
+
+**Text file format** (`./files/poses.txt`):
+```
+standing
+sitting
+crouching
+```
+
+**Prompt file with variables:**
+```json
+{
+    "parameters": {
+        "workflow_file": "./workflows-files/your-workflow.json",
+        "workflow_items": {
+            "positive_prompt": "node_id,inputs,field_name"
+        },
+        "save_images": {
+            "enabled": true,
+            "output_directory": "./images/",
+            "filename_prefix": "CFYUI-BP"
+        }
+    },
+    "variables": {
+        "poses": "./files/poses.txt",
+        "hair": "./files/hair.txt"
+    },
+    "prompts": [
+        {
+            "positive_prompt": "1girl, $poses, $hair, looking at viewer",
+            "seed": "random"
+        }
+    ]
+}
+```
+
+With 3 poses and 4 hair styles, this single prompt entry will produce **12 generation jobs** (3 × 4), one for every combination.
+
+**Notes:**
+- Variable names must start with a letter or underscore and contain only letters, digits, and underscores.
+- If a referenced file is not found, a warning is printed and the variable is treated as an empty list (the prompt is skipped).
+- Variables only apply to `positive_prompt`; other fields are not expanded.
 
 File Structure
 
